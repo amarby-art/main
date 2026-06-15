@@ -1,17 +1,20 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./style.css">
     <title>Deltarune</title>
 </head>
 <body>
 
-    <div class="logo-container">
-        <img src="./logo.png" alt="Logo" class="logo">
-    </div>
+    <div class="menu-wrapper">
+        <div class="logo-container">
+            <img src="./logo.png" alt="Deltarune" class="logo">
+        </div>
 
-    <div class="menu" id="menu"></div>
+        <div class="menu" id="menu"></div>
+    </div>
 
     <audio id="drone" loop autoplay>
         <source src="./drone.ogg" type="audio/ogg">
@@ -29,7 +32,6 @@ const CHAPTERS = [
     { number: 7, title: "--", available: false }
 ];
 
-let gameStarted = false;
 let selectedChapter = null;
 
 const audio = document.getElementById('drone');
@@ -41,14 +43,14 @@ function initMenu() {
     CHAPTERS.forEach((chapter, index) => {
         const row = document.createElement('a');
         row.className = chapter.available ? 'row' : 'disabled-row';
-        
-        // TEMPORARY FIX: Changed available chapters to trigger loadChapter() safely
-        row.href = chapter.available ? `javascript:loadChapter(${chapter.number}, '${chapter.title}')` : `javascript:alert('Chapter ${chapter.number} coming soon!')`;
+        row.href = chapter.available ? `javascript:loadChapter(${chapter.number}, '${chapter.title}')` : `javascript:void(0)`;
         
         row.innerHTML = `
-            <span class="chapter">Chapter ${chapter.number}</span>
-            <span class="${chapter.available ? 'title' : 'disabled-title'}">${chapter.title}</span>
-            <img src="./${chapter.available ? chapter.number : 0}.png">
+            <span class="chapter-num">Ch. ${chapter.number}</span>
+            <span class="chapter-title">${chapter.title}</span>
+            <div class="chapter-status-img">
+                <img src="./${chapter.available ? chapter.number : 0}.png" alt="">
+            </div>
         `;
         menu.appendChild(row);
     });
@@ -56,108 +58,52 @@ function initMenu() {
 
 function restartAudio() {
     audio.currentTime = 0;
-    audio.play().catch(err => {
-        console.log('Audio play failed:', err);
+    audio.play().catch(() => {
         const resume = () => {
-            audio.play().catch(e => console.log('Audio resume failed:', e));
+            audio.play();
             window.removeEventListener('click', resume);
-            window.removeEventListener('keydown', resume);
         };
         window.addEventListener('click', resume, { once: true });
-        window.addEventListener('keydown', resume, { once: true });
     });
 }
 
-// TEMPORARY FIX: Plays a success message alert instead of crashing on a missing file path
 function loadChapter(number, title) {
-    alert(`🎉 Success! You selected Chapter ${number}: "${title}". (Once you build this chapter's files, this screen will load your game!)`);
+    menuSelectAudio.play().catch(() => {});
+    alert(`CHAPTER ${number}: "${title}" selected.`);
 }
 
 function selectChapter(index) {
-    const rows = document.querySelectorAll('.row');
+    const rows = document.querySelectorAll('.row, .disabled-row');
     if (selectedChapter !== null && rows[selectedChapter]) {
         rows[selectedChapter].classList.remove("selected");
     }
     selectedChapter = index;
     if(rows[selectedChapter]) {
         rows[selectedChapter].classList.add("selected");
-        menuMoveAudio.play().catch(e => {});
-    }
-}
-
-function navigateUp() {
-    const rows = document.querySelectorAll('.row');
-    if (rows.length === 0) return;
-    if (selectedChapter === null) {
-        selectChapter(0);
-    } else {
-        const newIndex = selectedChapter === 0 ? rows.length - 1 : selectedChapter - 1;
-        selectChapter(newIndex);
-    }
-}
-
-function navigateDown() {
-    const rows = document.querySelectorAll('.row');
-    if (rows.length === 0) return;
-    if (selectedChapter === null) {
-        selectChapter(0);
-    } else {
-        const newIndex = selectedChapter === rows.length - 1 ? 0 : selectedChapter + 1;
-        selectChapter(newIndex);
-    }
-}
-
-function activateSelected() {
-    if (selectedChapter !== null) {
-        const rows = document.querySelectorAll('.row');
-        if(rows[selectedChapter]) {
-            menuSelectAudio.play().catch(e => {});
-            window.location.href = rows[selectedChapter].href;
-        }
+        menuMoveAudio.play().catch(() => {});
     }
 }
 
 document.addEventListener('keydown', (event) => {
-    if (gameStarted) return;
-    switch(event.key) {
-        case 'ArrowUp': navigateUp(); break;
-        case 'ArrowDown': navigateDown(); break;
-        case 'Enter': activateSelected(); break;
+    const rows = document.querySelectorAll('.row, .disabled-row');
+    if (rows.length === 0) return;
+
+    if (event.key === 'ArrowUp') {
+        const newIndex = selectedChapter === null || selectedChapter === 0 ? rows.length - 1 : selectedChapter - 1;
+        selectChapter(newIndex);
+    } else if (event.key === 'ArrowDown') {
+        const newIndex = selectedChapter === null || selectedChapter === rows.length - 1 ? 0 : selectedChapter + 1;
+        selectChapter(newIndex);
+    } else if (event.key === 'Enter' && selectedChapter !== null) {
+        rows[selectedChapter].click();
     }
 });
 
 function setupMouseEvents() {
-    document.querySelectorAll('.row').forEach((row, index) => {
-        row.addEventListener('mouseenter', () => {
-            if (!gameStarted) {
-                if (selectedChapter !== null) {
-                    const oldRow = document.querySelectorAll('.row')[selectedChapter];
-                    if(oldRow) oldRow.classList.remove("selected");
-                }
-                selectChapter(index);
-            }
-        });
-        row.addEventListener('click', () => {
-            if (!gameStarted) {
-                menuSelectAudio.play().catch(e => {});
-            }
-        });
+    document.querySelectorAll('.row, .disabled-row').forEach((row, index) => {
+        row.addEventListener('mouseenter', () => selectChapter(index));
     });
 }
-
-document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && !gameStarted) {
-        restartAudio();
-    }
-});
-
-window.addEventListener('pageshow', (event) => {
-    if (event.persisted || performance.navigation.type === 2) {
-        gameStarted = false;
-        audio.muted = false;
-        restartAudio();
-    }
-});
 
 initMenu();
 setupMouseEvents();
