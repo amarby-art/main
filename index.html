@@ -1,18 +1,21 @@
-<!DOCTYPE html>
+<!<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="https://github.io">
+    <!-- Replace URL with your real GitHub Pages path or use relative paths like "./style.css" -->
+    <link rel="stylesheet" href="https://YOUR_USERNAME.github.io/YOUR_REPO/style.css">
     <title>Deltarune</title>
 </head>
 <body>
+
     <div class="logo-container">
-        <img src="https://github.io" alt="Logo" class="logo">
+        <img src="https://YOUR_USERNAME.github.io/YOUR_REPO/logo.png" alt="Logo" class="logo">
     </div>
+
     <div class="menu" id="menu"></div>
-    
+
     <audio id="drone" loop autoplay>
-        <source src="https://github.io" type="audio/ogg">
+        <source src="https://YOUR_USERNAME.github.io/YOUR_REPO/drone.ogg" type="audio/ogg">
         Your browser does not support the audio element.
     </audio>
 
@@ -31,8 +34,9 @@ let gameStarted = false;
 let selectedChapter = null;
 
 const audio = document.getElementById('drone');
-const menuMoveAudio = new Audio('https://github.io');
-const menuSelectAudio = new Audio('https://github.io');
+// Fixed: Swapped to your base URL structure
+const menuMoveAudio = new Audio('https://YOUR_USERNAME.github.io/YOUR_REPO/move.mp3');
+const menuSelectAudio = new Audio('https://YOUR_USERNAME.github.io/YOUR_REPO/select.mp3');
 
 function initMenu() {
     const menu = document.getElementById('menu');
@@ -40,10 +44,12 @@ function initMenu() {
         const row = document.createElement('a');
         row.className = chapter.available ? 'row' : 'disabled-row';
         row.href = chapter.available ? `javascript:loadChapter(${chapter.number})` : `javascript:alert('Chapter ${chapter.number} coming soon!')`;
+        
+        // Fixed: Swapped the outer quotes to backticks (`) and added "$" before the brackets
         row.innerHTML = `
             <span class="chapter">Chapter ${chapter.number}</span>
             <span class="${chapter.available ? 'title' : 'disabled-title'}">${chapter.title}</span>
-            <img src="https://github.io{chapter.available ? chapter.number : 0}.png">
+            <img src="https://YOUR_USERNAME.github.io/YOUR_REPO/${chapter.available ? chapter.number : 0}.png">
         `;
         menu.appendChild(row);
     });
@@ -65,21 +71,25 @@ function restartAudio() {
 
 function loadChapter(chapter) {
     audio.muted = true;
-    window.location.href = `https://github.io{chapter}/index.html`;
+    // Fixed: Swapped quotes to backticks and added standard template literal syntax
+    window.location.href = `https://YOUR_USERNAME.github.io/YOUR_REPO/chapter${chapter}/index.html`;
 }
 
 function selectChapter(index) {
     const rows = document.querySelectorAll('.row');
-    if (selectedChapter !== null) {
+    if (selectedChapter !== null && rows[selectedChapter]) {
         rows[selectedChapter].classList.remove("selected");
     }
     selectedChapter = index;
-    rows[selectedChapter].classList.add("selected");
-    menuMoveAudio.play();
+    if(rows[selectedChapter]) {
+        rows[selectedChapter].classList.add("selected");
+        menuMoveAudio.play().catch(e => {});
+    }
 }
 
 function navigateUp() {
     const rows = document.querySelectorAll('.row');
+    if (rows.length === 0) return;
     if (selectedChapter === null) {
         selectChapter(0);
     } else {
@@ -90,6 +100,7 @@ function navigateUp() {
 
 function navigateDown() {
     const rows = document.querySelectorAll('.row');
+    if (rows.length === 0) return;
     if (selectedChapter === null) {
         selectChapter(0);
     } else {
@@ -101,8 +112,10 @@ function navigateDown() {
 function activateSelected() {
     if (selectedChapter !== null) {
         const rows = document.querySelectorAll('.row');
-        menuSelectAudio.play();
-        window.location.href = rows[selectedChapter].href;
+        if(rows[selectedChapter]) {
+            menuSelectAudio.play().catch(e => {});
+            window.location.href = rows[selectedChapter].href;
+        }
     }
 }
 
@@ -119,15 +132,16 @@ function setupMouseEvents() {
     document.querySelectorAll('.row').forEach((row, index) => {
         row.addEventListener('mouseenter', () => {
             if (!gameStarted) {
-                menuMoveAudio.play();
                 if (selectedChapter !== null) {
-                    document.querySelectorAll('.row')[selectedChapter].classList.remove("selected");
+                    const oldRow = document.querySelectorAll('.row')[selectedChapter];
+                    if(oldRow) oldRow.classList.remove("selected");
                 }
+                selectChapter(index);
             }
         });
         row.addEventListener('click', () => {
             if (!gameStarted) {
-                menuSelectAudio.play();
+                menuSelectAudio.play().catch(e => {});
             }
         });
     });
@@ -147,9 +161,11 @@ window.addEventListener('pageshow', (event) => {
     }
 });
 
+// Initialization
 initMenu();
 setupMouseEvents();
 restartAudio();
 </script>
 </body>
 </html>
+
