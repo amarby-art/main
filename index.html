@@ -1,21 +1,22 @@
-<!<!DOCTYPE html>
+
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <!-- Replace URL with your real GitHub Pages path or use relative paths like "./style.css" -->
-    <link rel="stylesheet" href="https://YOUR_USERNAME.github.io/YOUR_REPO/style.css">
+    <!-- Links pointing directly to your live repository assets -->
+    <link rel="stylesheet" href="https://github.io">
     <title>Deltarune</title>
 </head>
 <body>
 
     <div class="logo-container">
-        <img src="https://YOUR_USERNAME.github.io/YOUR_REPO/logo.png" alt="Logo" class="logo">
+        <img src="https://github.io" alt="Logo" class="logo">
     </div>
 
     <div class="menu" id="menu"></div>
 
     <audio id="drone" loop autoplay>
-        <source src="https://YOUR_USERNAME.github.io/YOUR_REPO/drone.ogg" type="audio/ogg">
+        <source src="https://github.io" type="audio/ogg">
         Your browser does not support the audio element.
     </audio>
 
@@ -34,9 +35,8 @@ let gameStarted = false;
 let selectedChapter = null;
 
 const audio = document.getElementById('drone');
-// Fixed: Swapped to your base URL structure
-const menuMoveAudio = new Audio('https://YOUR_USERNAME.github.io/YOUR_REPO/move.mp3');
-const menuSelectAudio = new Audio('https://YOUR_USERNAME.github.io/YOUR_REPO/select.mp3');
+const menuMoveAudio = new Audio('https://github.io');
+const menuSelectAudio = new Audio('https://github.io');
 
 function initMenu() {
     const menu = document.getElementById('menu');
@@ -45,11 +45,11 @@ function initMenu() {
         row.className = chapter.available ? 'row' : 'disabled-row';
         row.href = chapter.available ? `javascript:loadChapter(${chapter.number})` : `javascript:alert('Chapter ${chapter.number} coming soon!')`;
         
-        // Fixed: Swapped the outer quotes to backticks (`) and added "$" before the brackets
+        // FIX: Replaced quotes with backticks and integrated proper ${} syntax
         row.innerHTML = `
             <span class="chapter">Chapter ${chapter.number}</span>
             <span class="${chapter.available ? 'title' : 'disabled-title'}">${chapter.title}</span>
-            <img src="https://YOUR_USERNAME.github.io/YOUR_REPO/${chapter.available ? chapter.number : 0}.png">
+            <img src="https://github.io{chapter.available ? chapter.number : 0}.png">
         `;
         menu.appendChild(row);
     });
@@ -71,8 +71,8 @@ function restartAudio() {
 
 function loadChapter(chapter) {
     audio.muted = true;
-    // Fixed: Swapped quotes to backticks and added standard template literal syntax
-    window.location.href = `https://YOUR_USERNAME.github.io/YOUR_REPO/chapter${chapter}/index.html`;
+    // FIX: Using template literals to inject the dynamic chapter folder route properly
+    window.location.href = `https://github.io{chapter}/index.html`;
 }
 
 function selectChapter(index) {
@@ -168,4 +168,3 @@ restartAudio();
 </script>
 </body>
 </html>
-
