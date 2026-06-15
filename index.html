@@ -1,22 +1,20 @@
-
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <!-- Links pointing directly to your live repository assets -->
-    <link rel="stylesheet" href="https://github.io">
+    <link rel="stylesheet" href="./style.css">
     <title>Deltarune</title>
 </head>
 <body>
 
     <div class="logo-container">
-        <img src="https://github.io" alt="Logo" class="logo">
+        <img src="./logo.png" alt="Logo" class="logo">
     </div>
 
     <div class="menu" id="menu"></div>
 
     <audio id="drone" loop autoplay>
-        <source src="https://github.io" type="audio/ogg">
+        <source src="./drone.ogg" type="audio/ogg">
         Your browser does not support the audio element.
     </audio>
 
@@ -35,21 +33,22 @@ let gameStarted = false;
 let selectedChapter = null;
 
 const audio = document.getElementById('drone');
-const menuMoveAudio = new Audio('https://github.io');
-const menuSelectAudio = new Audio('https://github.io');
+const menuMoveAudio = new Audio('./move.mp3');
+const menuSelectAudio = new Audio('./select.mp3');
 
 function initMenu() {
     const menu = document.getElementById('menu');
     CHAPTERS.forEach((chapter, index) => {
         const row = document.createElement('a');
         row.className = chapter.available ? 'row' : 'disabled-row';
-        row.href = chapter.available ? `javascript:loadChapter(${chapter.number})` : `javascript:alert('Chapter ${chapter.number} coming soon!')`;
         
-        // FIX: Replaced quotes with backticks and integrated proper ${} syntax
+        // TEMPORARY FIX: Changed available chapters to trigger loadChapter() safely
+        row.href = chapter.available ? `javascript:loadChapter(${chapter.number}, '${chapter.title}')` : `javascript:alert('Chapter ${chapter.number} coming soon!')`;
+        
         row.innerHTML = `
             <span class="chapter">Chapter ${chapter.number}</span>
             <span class="${chapter.available ? 'title' : 'disabled-title'}">${chapter.title}</span>
-            <img src="https://github.io{chapter.available ? chapter.number : 0}.png">
+            <img src="./${chapter.available ? chapter.number : 0}.png">
         `;
         menu.appendChild(row);
     });
@@ -69,10 +68,9 @@ function restartAudio() {
     });
 }
 
-function loadChapter(chapter) {
-    audio.muted = true;
-    // FIX: Using template literals to inject the dynamic chapter folder route properly
-    window.location.href = `https://github.io{chapter}/index.html`;
+// TEMPORARY FIX: Plays a success message alert instead of crashing on a missing file path
+function loadChapter(number, title) {
+    alert(`🎉 Success! You selected Chapter ${number}: "${title}". (Once you build this chapter's files, this screen will load your game!)`);
 }
 
 function selectChapter(index) {
@@ -161,7 +159,6 @@ window.addEventListener('pageshow', (event) => {
     }
 });
 
-// Initialization
 initMenu();
 setupMouseEvents();
 restartAudio();
