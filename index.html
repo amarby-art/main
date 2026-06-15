@@ -1,226 +1,192 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./style.css">
-    <title>Deltarune</title>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="style.css">
+  <title>Deltarune</title>
 </head>
 <body>
+  <div class="logo-container">
+    <img src="logo.png" alt="Logo" class="logo">
+  </div>
+  <div class="menu" id="menu"></div>
+  
+  <audio id="drone" loop autoplay>
+    <source src="audios/NGAHHH!!.ogg" type="audio/ogg">
+    Your browser does not support the audio element.
+  </audio>
+  <script>
+    // Configuration
+    const CHAPTERS = [
+      { number: 1, title: "The Beginning", available: true },
+      { number: 2, title: "A Cyber's World", available: true },
+      { number: 3, title: "Late Night", available: true },
+      { number: 4, title: "Prophecy", available: true },
+      { number: 5, title: "--", available: false },
+      { number: 6, title: "--", available: false },
+      { number: 7, title: "--", available: false }
+    ];
 
-    <div class="menu-wrapper">
-        <div class="logo-container">
-            <img src="./logo.png" alt="Deltarune" class="logo">
-        </div>
+    // State
+    let gameStarted = false;
+    let selectedChapter = null;
 
-        <div class="menu" id="menu"></div>
-    </div>
+  // Audio elements
+  const audio = document.getElementById('drone');
+    const menuMoveAudio = new Audio('audios/snd_menumove.mp3');
+    const menuSelectAudio = new Audio('audios/snd_select.mp3');
 
-    <audio id="drone" loop autoplay>
-        <source src="./drone.ogg" type="audio/ogg">
-        Your browser does not support the audio element.
-    </audio>
-
-<script>
-const CHAPTERS = [
-    { number: 1, title: "The Beginning", available: true },
-    { number: 2, title: "A Cyber's World", available: true },
-    { number: 3, title: "Late Night", available: true },
-    { number: 4, title: "Prophecy", available: true },
-    { number: 5, title: "--", available: false },
-    { number: 6, title: "--", available: false },
-    { number: 7, title: "--", available: false }
-];
-
-let selectedChapter = null;
-
-const audio = document.getElementById('drone');
-const menuMoveAudio = new Audio('./move.mp3');
-const menuSelectAudio = new Audio('./select.mp3');
-
-function initMenu() {
-    const menu = document.getElementById('menu');
-    CHAPTERS.forEach((chapter, index) => {
+    // Initialize menu
+    function initMenu() {
+      const menu = document.getElementById('menu');
+      
+      CHAPTERS.forEach((chapter, index) => {
         const row = document.createElement('a');
         row.className = chapter.available ? 'row' : 'disabled-row';
-        row.href = chapter.available ? `javascript:loadChapter(${chapter.number}, '${chapter.title}')` : `javascript:void(0)`;
+        row.href = chapter.available 
+          ? `javascript:loadChapter(${chapter.number})` 
+          : `javascript:alert('Chapter ${chapter.number} coming soon!')`;
         
         row.innerHTML = `
-            <span class="chapter-num">Ch. ${chapter.number}</span>
-            <span class="chapter-title">${chapter.title}</span>
-            <div class="chapter-status-img">
-                <img src="./${chapter.available ? chapter.number : 0}.png" alt="">
-            </div>
+          <span class="chapter">Chapter ${chapter.number}</span>
+          <span class="${chapter.available ? 'title' : 'disabled-title'}">${chapter.title}</span>
+          <img src="icons/${chapter.available ? chapter.number : 0}.png">
         `;
+        
         menu.appendChild(row);
-    });
-}
+      });
+    }
 
-function restartAudio() {
-    audio.currentTime = 0;
-    audio.play().catch(() => {
+    // Audio control - Fixed to restart audio properly
+    function restartAudio() {
+      audio.currentTime = 0;
+      audio.play().catch(err => {
+        console.log('Audio play failed:', err);
+        // If autoplay was blocked, resume on first user interaction
         const resume = () => {
-            audio.play();
-            window.removeEventListener('click', resume);
+          audio.play().catch(e => console.log('Audio resume failed:', e));
+          window.removeEventListener('click', resume);
+          window.removeEventListener('keydown', resume);
         };
         window.addEventListener('click', resume, { once: true });
-    });
-}
+        window.addEventListener('keydown', resume, { once: true });
+      });
+    }
 
-function loadChapter(number, title) {
-    menuSelectAudio.play().catch(() => {});
-    alert(`CHAPTER ${number}: "${title}" selected.`);
-}
+    // Chapter loading — navigate to the chapter page to avoid path/relative URL issues
+    function loadChapter(chapter) {
+      // Mute background drone when actually loading a chapter
+      audio.muted = true;
+      // Perform a full navigation so the chapter's own <base> and scripts load correctly
+      window.location.href = `chapter${chapter}/index.html`;
+    }
 
-function selectChapter(index) {
-    const rows = document.querySelectorAll('.row, .disabled-row');
-    if (selectedChapter !== null && rows[selectedChapter]) {
+    // Navigation
+    function selectChapter(index) {
+      const rows = document.querySelectorAll('.row');
+      if (selectedChapter !== null) {
         rows[selectedChapter].classList.remove("selected");
+      }
+      selectedChapter = index;
+      rows[selectedChapter].classList.add("selected");
+      menuMoveAudio.play();
     }
-    selectedChapter = index;
-    if(rows[selectedChapter]) {
-        rows[selectedChapter].classList.add("selected");
-        menuMoveAudio.play().catch(() => {});
-    }
-}
 
-document.addEventListener('keydown', (event) => {
-    const rows = document.querySelectorAll('.row, .disabled-row');
-    if (rows.length === 0) return;
-
-    if (event.key === 'ArrowUp') {
-        const newIndex = selectedChapter === null || selectedChapter === 0 ? rows.length - 1 : selectedChapter - 1;
+    function navigateUp() {
+      const rows = document.querySelectorAll('.row');
+      if (selectedChapter === null) {
+        selectChapter(0);
+      } else {
+        const newIndex = selectedChapter === 0 ? rows.length - 1 : selectedChapter - 1;
         selectChapter(newIndex);
-    } else if (event.key === 'ArrowDown') {
-        const newIndex = selectedChapter === null || selectedChapter === rows.length - 1 ? 0 : selectedChapter + 1;
-        selectChapter(newIndex);
-    } else if (event.key === 'Enter' && selectedChapter !== null) {
-        rows[selectedChapter].click();
+      }
     }
-});
 
-function setupMouseEvents() {
-    document.querySelectorAll('.row, .disabled-row').forEach((row, index) => {
-        row.addEventListener('mouseenter', () => selectChapter(index));
+    function navigateDown() {
+      const rows = document.querySelectorAll('.row');
+      if (selectedChapter === null) {
+        selectChapter(0);
+      } else {
+        const newIndex = selectedChapter === rows.length - 1 ? 0 : selectedChapter + 1;
+        selectChapter(newIndex);
+      }
+    }
+
+    function activateSelected() {
+      if (selectedChapter !== null) {
+        const rows = document.querySelectorAll('.row');
+        menuSelectAudio.play();
+        window.location.href = rows[selectedChapter].href;
+      }
+    }
+
+    // Event listeners
+    document.addEventListener('keydown', (event) => {
+      if (gameStarted) return;
+      
+      switch(event.key) {
+        case 'ArrowUp':
+          navigateUp();
+          break;
+        case 'ArrowDown':
+          navigateDown();
+          break;
+        case 'Enter':
+          activateSelected();
+          break;
+      }
     });
-}
 
-initMenu();
-setupMouseEvents();
-restartAudio();
-</script>
+    // Mouse interactions
+    function setupMouseEvents() {
+      document.querySelectorAll('.row').forEach((row, index) => {
+        row.addEventListener('mouseenter', () => {
+          if (!gameStarted) {
+            menuMoveAudio.play();
+            if (selectedChapter !== null) {
+              document.querySelectorAll('.row')[selectedChapter].classList.remove("selected");
+            }
+          }
+        });
+        
+        row.addEventListener('click', () => {
+          if (!gameStarted) {
+            menuSelectAudio.play();
+          }
+        });
+      });
+    }
+
+    // Handle page visibility changes to restart audio
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && !gameStarted) {
+        restartAudio();
+      }
+    });
+
+    // Handle when returning from a chapter (page load)
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted || performance.navigation.type === 2) {
+        // Page was restored from cache (back button)
+        gameStarted = false;
+        // Unmute background audio when returning to menu and try to restart it
+        audio.muted = false;
+        restartAudio();
+      }
+    });
+
+    // Analytics
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-WLTG1S4STB');
+
+  // Initialize
+  initMenu();
+  setupMouseEvents();
+    
+  // Try to play audio on load
+  restartAudio();
+  </script>
 </body>
 </html>
-/* Import Undertale/Deltarune themed pixel font styling */
-@import url('https://googleapis.com');
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    background-color: #000000;
-    color: #ffffff;
-    font-family: 'DotGothic16', 'Courier New', Courier, monospace;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    overflow: hidden;
-}
-
-/* Center aligned layout container */
-.menu-wrapper {
-    width: 100%;
-    max-width: 600px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-}
-
-.logo-container {
-    margin-bottom: 40px;
-    text-align: center;
-}
-
-.logo {
-    max-width: 320px;
-    height: auto;
-    image-rendering: pixelated;
-}
-
-.menu {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-/* Base selection row setup */
-.row, .disabled-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: transparent;
-    border: 2px solid transparent;
-    padding: 14px 24px;
-    text-decoration: none;
-    font-size: 24px;
-    letter-spacing: 2px;
-    transition: all 0.1s ease;
-    cursor: pointer;
-}
-
-/* Active and playable chapter style rules */
-.row {
-    color: #ffffff;
-}
-
-/* Locked chapters appear dim */
-.disabled-row {
-    color: #444444;
-    cursor: not-allowed;
-}
-
-.chapter-num {
-    width: 25%;
-    font-weight: bold;
-}
-
-.chapter-title {
-    width: 55%;
-    text-align: left;
-}
-
-.chapter-status-img {
-    width: 20%;
-    display: flex;
-    justify-content: flex-end;
-}
-
-.chapter-status-img img {
-    height: 28px;
-    image-rendering: pixelated;
-}
-
-/* Dynamic Cyan Selection Glow Highlight effect mimicking the target design */
-.row.selected, .disabled-row.selected {
-    border-color: #00ffff;
-    background-color: rgba(0, 255, 255, 0.05);
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
-}
-
-.row.selected .chapter-num, .row.selected .chapter-title {
-    color: #00ffff;
-    text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
-}
-
-/* Even locked slots show selection borders when navigating past them */
-.disabled-row.selected {
-    border-color: #555555;
-    background-color: rgba(255, 255, 255, 0.02);
-    box-shadow: none;
-}
